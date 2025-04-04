@@ -1,0 +1,41 @@
+// Pin assignments
+int photoPin = A0;     // Photoresistor connected to A0
+int potPin = A1;       // Potentiometer connected to A1
+int ledPin = 2;        // LED connected to PWM pin D9
+
+void setup() {
+  Serial.begin(9600);     // Start serial monitor
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  // Read analog values (0 - 1023)
+  int lightValue = analogRead(photoPin);
+  int potValue = analogRead(potPin);
+
+  // Convert to voltage (0.00 - 5.00 V)
+  float lightVoltage = lightValue * (5.0 / 1023.0);
+  float potVoltage = potValue * (5.0 / 1023.0);
+
+  // Map light sensor to LED brightness (inverted: darker = brighter LED)
+  int brightness = map(lightValue, 0, 1023, 255, 0);
+  analogWrite(ledPin, brightness);
+
+  // Print all values to Serial Monitor
+  Serial.print("LDR Value: ");
+  Serial.print(lightValue);
+  Serial.print(" | Voltage acc. ldr : ");
+  Serial.print(lightVoltage);
+  Serial.print(" V");
+
+  //Serial.print(" || Pot Value: ");
+  //Serial.print(potValue);
+  Serial.print(" | Voltage acc. pot.mtr : ");
+  Serial.print(potVoltage);
+  Serial.print(" V");
+
+  Serial.print(" || LED Brightness: ");
+  Serial.println(brightness);
+
+  delay(300);  // Update every 300ms
+}
