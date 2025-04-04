@@ -1,0 +1,76 @@
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(12, 11, 10, 9, 8, 7); // LCD pins
+
+// Sensor Pins
+const int gasPin = A0;    // MQ-2
+const int tempPin = A1;   // TMP36
+
+// Alert Pins
+const int redLed = 2;     // Fire LED (connect to + via resistor)
+const int greenLed = 13;   // Normal LED (connect to + via resistor)
+const int buzzer = 4;     // Buzzer
+
+
+// Thresholds
+const int smokeThreshold = 155;
+const int tempThreshold = 50;
+
+void setup() {
+  lcd.begin(16, 2);
+  //lcd.print("System Ready");
+  
+  // Initialize LED pins
+  pinMode(redLed, OUTPUT);
+  pinMode(greenLed, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  
+  // Start in safe state (GREEN ON, RED OFF)
+  //digitalWrite(greenLed, HIGH);
+  digitalWrite(redLed, LOW);
+  digitalWrite(buzzer, LOW);
+  digitalWrite(greenLed, HIGH);
+}
+
+void loop() {
+  // TMP36 temperature reading
+  float voltage = analogRead(tempPin) * (5.0 / 1024.0);
+  float temperature = (voltage - 0.5) * 100.0;  // TMP36 adjustment
+
+  int smokeValue = analogRead(gasPin);
+  
+  // Display readings
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Smoke:");
+  lcd.print(smokeValue);
+  
+  lcd.setCursor(0, 1);
+  lcd.print("Temp:");
+  lcd.print(temperature, 1);
+  lcd.print("\337C");
+
+  // Check for fire conditions
+  if (smokeValue > smokeThreshold || temperature > tempThreshold) {
+    // FIRE DETECTED - RED ON, GREEN OFF
+    digitalWrite(greenLed, LOW);    // Turn OFF green
+    digitalWrite(redLed, HIGH);     // Turn ON red
+    tone(buzzer, 1000);             // Sound alarm
+    
+    lcd.clear();
+    lcd.print("FIRE DETECTED!");
+    lcd.setCursor(0, 1);
+    lcd.print("T-");
+    lcd.print(temperature, 1);
+    lcd.print("Smoke:");
+    lcd.print(smokeValue);
+    delay(500);
+    noTone(buzzer);
+    delay(500);
+  } else {
+    // NORMAL STATE - GREEN ON, RED OFF
+    digitalWrite(redLed, LOW);      // Ensure red is OFF
+    digitalWrite(greenLed, HIGH);   // Ensure green is ON
+    delay(1000);
+  }
+}
