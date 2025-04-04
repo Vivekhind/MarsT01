@@ -1,0 +1,105 @@
+// Ping Ultrasonic + Force Sensor with Buzzer + Voltage Conversion
+const int pingPin = 2;     // Ping on D2
+const int redPin = 7;      // RGB pins
+const int greenPin = 5;
+const int bluePin = 6;
+const int forcePin = A0;   // Force sensor on A0
+const int buzzerPin = 3;   // Piezo on D3
+
+// Distance thresholds (cm)
+const int redZone = 30;
+const int blueZone = 150;
+const int greenZone = 331;
+
+// Force sensor threshold (raw ADC)
+const int forceThreshold = 500;
+
+void setup() {
+  pinMode(pingPin, OUTPUT);
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // --- Part 1: Distance ---
+  int distance = getPingDistance();
+  updateRGB(distance);
+
+  // --- Part 2: Force Sensor ---
+  int forceValue = analogRead(forcePin);  // Raw reading (0-1023)
+  //float forceVoltage = forceValue * (5.0 / 1023.0);  // Convert to volts
+
+  // Optional: Estimate Force (very rough, for simulation only)
+  //float forceNewton = pow((1023.0 - forceValue), 2.0) / 1000.0;
+
+  // Serial Output
+ // Serial.print("Force Value: ");
+  //Serial.print(forceValue);
+ //Serial.print(" | Voltage: ");
+  //Serial.print(forceNewton);
+  //Serial.print(" V");
+
+  Serial.print(" | sensor pin reading : ");
+  Serial.print(forceValue);
+  //Serial.println(" N");
+
+  if (forceValue > forceThreshold) {
+    triggerBuzzer();
+  }
+
+  delay(200);
+}
+
+int getPingDistance() {
+  pinMode(pingPin, OUTPUT);
+  digitalWrite(pingPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pingPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(pingPin, LOW);
+
+  pinMode(pingPin, INPUT);
+  long duration = pulseIn(pingPin, HIGH);
+  int cm = duration * 0.034 / 2;
+
+  Serial.print(" || Distance: ");
+  Serial.print(cm);
+  Serial.println(" cm");
+  return cm;
+}
+
+void updateRGB(int distance) {
+  if (distance <= redZone) {
+    setColor(255, 0, 0);     // Red
+    Serial.println("Status: RED (0-30cm)");
+  } 
+  else if (distance <= blueZone) {
+    setColor(0, 0, 255);     // Blue
+    Serial.println("Status: BLUE (30-150cm)");
+  }
+  else if (distance <= greenZone) {
+    setColor(0, 255, 0);     // Green
+    Serial.println("Status: GREEN (150-330cm)");
+  }
+  else {
+    setColor(225, 182, 93);  // Tan/Neutral
+    Serial.println("Status: SAFE (no object in range)");
+  }
+}
+
+void triggerBuzzer() {
+  tone(buzzerPin, 1000, 200);  // Beep
+  digitalWrite(redPin, HIGH);
+  delay(200);
+  digitalWrite(redPin, LOW);
+}
+
+// RGB LED control for COMMON ANODE (Tinkercad default)
+void setColor(int red, int green, int blue) {
+  analogWrite(redPin, red);
+  analogWrite(greenPin, green);
+  analogWrite(bluePin, blue);
+}
